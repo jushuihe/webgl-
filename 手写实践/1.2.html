@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实践1</title>
+</head>
+<body>
+  <canvas id='canvas'></canvas>
+  <script src="./js/webgl-helper.js"></script>
+  <script type='shader-source' id='vertexShader'>
+    void main () {
+      gl_Position = vec4(0.2, 0.2, 0.0, 1.0);
+      gl_PointSize = 10.0;
+    }
+  </script>
+  <script type="shader-source" id="fragmentShader">
+    void main () {
+      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+  </script>
+  <script>
+    var canvas = getCanvas('#canvas');
+    var gl = getContext(canvas);
+    var vertexShader = createShaderFromScript(gl, gl.VERTEX_SHADER, 'vertexShader');
+    console.log(vertexShader)
+    var fragmentShader = createShaderFromScript(gl, gl.FRAGMENT_SHADER, 'fragmentShader');
+    console.log(fragmentShader)
+    var program = createProgram(gl, vertexShader, fragmentShader).program;
+    console.log(program)
+    gl.useProgram(program);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, 1);
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三角形绘制球体</title>
+</head>
+<body>
+  <canvas id='canvas'></canvas>
+  <script type="shader-source" id="vertexShader">
+    //浮点数设置为中等精度
+		precision mediump float;
+		//接收 JavaScript 传递过来的点的坐标（X, Y）
+    attribute vec3 a_Position;
+		// 接收canvas的尺寸。
+		attribute vec4 a_Color;
+		//将顶点着色器插值后的颜色颜色信息（R, G, B, A）传递给片元着色器。
+    varying vec4 v_Color;
+    uniform mat4 u_Matrix;
+		void main(){
+      gl_Position = u_Matrix * vec4(a_Position, 1);
+      v_Color = a_Color;
+      gl_PointSize = 5.0;
+		}
+  </script>
+  <script type="shader-source" id="fragmentShader">
+    //设置浮点数精度为中等。
+    precision mediump float;
+    //接收 JavaScript 传过来的颜色值（rgba）。
+    varying vec4 v_Color;
+    void main(){
+      gl_FragColor = v_Color;
+      //gl_FragColor = vec4(255,22,0,1);
+   }
+  </script>
+  <script src="./js/webgl-helper.js"></script>
+  <script src="./js/webgl-matrix.js"></script>
+  <script src="./js/math.js"></script>
+  <script src="./js/geometry.js"></script>
+  <script src="./js/vector3.js"></script>
+  <script>
+    var Vector3 = window.lib3d.Vector3;
+    let canvas = getCanvas('#canvas');
+    resizeCanvas(canvas);
+    let gl = getContext(canvas);
+    let program = createSimpleProgramFromScript(gl, 'vertexShader', 'fragmentShader');
+    gl.useProgram(program);
+
+    var sphere = createSphere(5, 15, 10);
+    var indices = sphere.indices;
+    sphere = transformIndicesToUnIndices(sphere);
+    createColorForVertex(sphere);
+    console.log(sphere)
+    var positions = sphere.positions;
+    var colors = sphere.colors;
+
+    let a_Position = gl.getAttribLocation(program, 'a_Position');
+    let a_Color = gl.getAttribLocation(program, 'a_Color');
+    let u_Matrix = gl.getUniformLocation(program, 'u_Matrix');
+
+    gl.enableVertexAttribArray(a_Position);
+    gl.enableVertexAttribArray(a_Color);
+
+    var aspect = canvas.clientWidth / canvas.clientHeight;
+    var fieldOfViewRadians = 60;
+    var projectionMatrix = matrix.perspective(
+      fieldOfViewRadians,
+      aspect,
+      1,
+      2000
+    );
+    var cameraPosition = new Vector3(0, 0, 20);
+    var target = new Vector3(0, 0, 0);
+    var up = new Vector3(0, 1, 0);
+    var cameraMatrix = matrix.lookAt(cameraPosition, target, up);
+    var viewMatrix = matrix.inverse(cameraMatrix);
+    var viewProjectionMatrix = matrix.multiply(projectionMatrix, viewMatrix);
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+    var colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_Color, 4, gl.UNSIGNED_BYTE, true, 0, 0);
+    var indicesBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    //设置清屏颜色
+    gl.clearColor(0, 0, 0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    var yAngle = 0;
+    var xAngle = 0;
+    var timer = null;
+    var matrixX = matrix.identity();
+    console.log(matrixX)
+    var matrixY = matrix.identity();
+
+    function render(gl) {
+      xAngle += 1;
+      yAngle += 1;
+      // console.log(xAngle, yAngle)
+      //先绕 Y 轴旋转矩阵。
+      matrixY = matrix.rotationY((Math.PI / 180) * yAngle, matrixY);
+      matrixX = matrix.rotateX(
+        matrixY,
+        (Math.PI / 180) * xAngle,
+        matrixX
+      );
+      //模型投影矩阵。 //投影变换
+      gl.uniformMatrix4fv(
+        u_Matrix,
+        false,
+        matrix.multiply(viewProjectionMatrix, matrixX)
+      );
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, positions.length / 3);
+      requestAnimationFrame(() => {
+        render(gl)
+      })
+    }
+    // 绘制图形
+    render(gl)
+  </script>
+</body>
+</html>

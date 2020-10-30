@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实践1</title>
+</head>
+<body>
+  <canvas id='canvas'></canvas>
+  <script type='shader-source' id='vertexShader'>
+    void main () {
+      gl_Position = vec4(0.2, 0.2, 0.0, 1.0);
+      gl_PointSize = 10.0;
+    }
+  </script>
+  <script type="shader-source" id="fragmentShader">
+    void main () {
+      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+  </script>
+  <script>
+    var canvas = document.querySelector('#canvas');
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+    // 创建顶点着色器对象
+    var vertexShaderSource = document.querySelector('#vertexShader').innerHTML;
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader, vertexShaderSource);
+    gl.compileShader(vertexShader);
+
+    // 创建片元着色器
+    var fragmentShaderSource = document.querySelector('#fragmentShader').innerHTML;
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader, fragmentShaderSource);
+    gl.compileShader(fragmentShader);
+
+    // 创建着色器程序
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, 3);
+  </script>
+</body>
+</html>
